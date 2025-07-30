@@ -1,5 +1,6 @@
 import numpy as np
-from filterpy.kalman import KalmanFilter
+from numpy import dot, zeros, eye, isscalar, shape
+
 class KalmanFilterImplementation(object):
     
     # multivar Kalman Filter class
@@ -35,51 +36,54 @@ class KalmanFilterImplementation(object):
             F = self.F
         if Q is None:
             Q = self.Q
+        elif isscalar(Q):
+            Q = eye(self.dim_x) * Q
         
         # x = Fx + Bu
         if B is not None and u is not None:
             self.x = np.dot(F, self.x) + np.dot(B, u)
         else:
             self.x = np.dot(F, self.x)
+            
         # P = FPF' + Q
         self.P = np.dot(np.dot(F, self.P), F.T) + Q
         
         self.x_prior = self.x.copy()
         self.P_prior = self.P.copy()
         
+       
+        
     def update(self, z, R=None, H=None):
-        if z is None:
-            self.z = np.array([[None]*self.dim_z]).T
-            self.x_post = self.x.copy()
-            self.P_post = self.P.copy()
-            self.y = np.zeros((self.dim_z, 1))
-            return
 
         if R is None:
             R = self.R
+        elif isscalar(R):
+            R = eye(self.dim_z) * R
 
         if H is None:
             z = np.reshape_z(z, self.dim_z, self.x.ndim)
             H = self.H
             
-        # code here
         self.y = z - np.dot(H, self.x)
         # K = PH'inverse(HPH'+R)
         self.K = np.dot(np.dot(self.P, H.T), np.linalg.inv(np.dot(H, np.dot(self.P, H.T)) + R))
         
         self.x = self.x + np.dot(self.K, self.y)
-        
-        ## DEFINE I (Identity Matrix)
+       
         # P = (I-KH)P(I-KH)' + KRK'
         I_KH = self.I - np.dot(self.K, H)
         self.P = np.dot(np.dot(I_KH, self.P), I_KH.T) + np.dot(np.dot(self.K, R), self.K.T)
          
+        print(self.x)
         self.x_post = self.x.copy()
         self.P_post = self.P.copy()
         
+        
+        
     def batch_filter(self, zs, Fs = None, Qs = None, Hs = None, Rs = None, Bs = None, us = None, saver = None):
         
-        # all these are identity matriciese at the first time step, then we multiply by the size of the first measurement
+        # all these are identity matriciese at the first time step, then we multiply by the size number 
+        # of measurements to determine the length of each Fs/Qs etc. (n is the number of epochs, it makes n copies of whatever F is)
         n = np.size(zs, 0)
         if Fs is None:
             Fs = [self.F] * n
@@ -92,32 +96,14 @@ class KalmanFilterImplementation(object):
         if Bs is None:
             Bs = [self.B] * n
         if us is None:
-            us = [0] * n
-            
-        # mean estimates from Kalman Filter
-        if self.x.ndim == 1:
-            means = np.zeros((n, self.dim_x))
-            means_p = np.zeros((n, self.dim_x))
-        else:
-            means = np.zeros((n, self.dim_x, 1))
-            means_p = np.zeros((n, self.dim_x, 1))
-
-        # state covariances from Kalman Filter
-        covariances = np.zeros((n, self.dim_x, self.dim_x))
-        covariances_p = np.zeros((n, self.dim_x, self.dim_x))    
+            us = [0] * n   
             
         for i, (z, F, Q, H, R, B, u) in enumerate(zip(zs, Fs, Qs, Hs, Rs, Bs, us)):
 
                 self.predict(u=u, B=B, F=F, Q=Q)
-                means_p[i, :] = self.x
-                covariances_p[i, :, :] = self.P
-
+                
                 self.update(z, R=R, H=H)
-                means[i, :] = self.x
-                covariances[i, :, :] = self.P
 
                 if saver is not None:
                     saver.save()
-
-        return (means, covariances, means_p, covariances_p)
         
