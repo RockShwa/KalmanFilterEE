@@ -1,0 +1,123 @@
+import numpy as np
+from filterpy.kalman import KalmanFilter
+class KalmanFilterImplementation(object):
+    
+    # multivar Kalman Filter class
+    def __init__(self, dim_x, dim_z):
+        self.dim_x = dim_x
+        self.dim_z = dim_z
+        self.x = np.zeros((dim_x,1)) # state of the system
+        self.P = np.eye(dim_x) # covariance matrix
+        self.F = np.eye(dim_x) # state transition function
+        self.Q = np.eye(dim_x) # process covariance (error of the model)
+        self.B = None # control transition matrix
+        self.u = None # control input
+        self.H = np.zeros((dim_x, dim_x)) # measurement function
+        self.z = np.array([None]*self.dim_z).T # measurement
+        self.R = np.eye(dim_z) # noise covariance
+        self.y = np.zeros((dim_z,1)) # residual
+        self.K = np.zeros((dim_x, dim_z)) # kalman gain
+    
+        # a way to represent 1 in multiple dimensions
+        # just creates a diagonal of 1s
+        self.I = np.eye(dim_x)
+        
+        self.x_prior = self.x.copy()
+        self.P_prior = self.P.copy()
+
+        self.x_post = self.x.copy()
+        self.P_post = self.P.copy()
+        
+    def predict(self, u=None, B=None, F=None, Q=None):
+        if B is None:
+            B = self.B
+        if F is None:
+            F = self.F
+        if Q is None:
+            Q = self.Q
+        
+        # x = Fx + Bu
+        if B is not None and u is not None:
+            self.x = np.dot(F, self.x) + np.dot(B, u)
+        else:
+            self.x = np.dot(F, self.x)
+        # P = FPF' + Q
+        self.P = np.dot(np.dot(F, self.P), F.T) + Q
+        
+        self.x_prior = self.x.copy()
+        self.P_prior = self.P.copy()
+        
+    def update(self, z, R=None, H=None):
+        if z is None:
+            self.z = np.array([[None]*self.dim_z]).T
+            self.x_post = self.x.copy()
+            self.P_post = self.P.copy()
+            self.y = np.zeros((self.dim_z, 1))
+            return
+
+        if R is None:
+            R = self.R
+
+        if H is None:
+            z = np.reshape_z(z, self.dim_z, self.x.ndim)
+            H = self.H
+            
+        # code here
+        self.y = z - np.dot(H, self.x)
+        # K = PH'inverse(HPH'+R)
+        self.K = np.dot(np.dot(self.P, H.T), np.linalg.inv(np.dot(H, np.dot(self.P, H.T)) + R))
+        
+        self.x = self.x + np.dot(self.K, self.y)
+        
+        ## DEFINE I (Identity Matrix)
+        # P = (I-KH)P(I-KH)' + KRK'
+        I_KH = self.I - np.dot(self.K, H)
+        self.P = np.dot(np.dot(I_KH, self.P), I_KH.T) + np.dot(np.dot(self.K, R), self.K.T)
+         
+        self.x_post = self.x.copy()
+        self.P_post = self.P.copy()
+        
+    def batch_filter(self, zs, Fs = None, Qs = None, Hs = None, Rs = None, Bs = None, us = None, saver = None):
+        
+        # all these are identity matriciese at the first time step, then we multiply by the size of the first measurement
+        n = np.size(zs, 0)
+        if Fs is None:
+            Fs = [self.F] * n
+        if Qs is None:
+            Qs = [self.Q] * n
+        if Hs is None:
+            Hs = [self.H] * n
+        if Rs is None:
+            Rs = [self.R] * n
+        if Bs is None:
+            Bs = [self.B] * n
+        if us is None:
+            us = [0] * n
+            
+        # mean estimates from Kalman Filter
+        if self.x.ndim == 1:
+            means = np.zeros((n, self.dim_x))
+            means_p = np.zeros((n, self.dim_x))
+        else:
+            means = np.zeros((n, self.dim_x, 1))
+            means_p = np.zeros((n, self.dim_x, 1))
+
+        # state covariances from Kalman Filter
+        covariances = np.zeros((n, self.dim_x, self.dim_x))
+        covariances_p = np.zeros((n, self.dim_x, self.dim_x))    
+            
+        for i, (z, F, Q, H, R, B, u) in enumerate(zip(zs, Fs, Qs, Hs, Rs, Bs, us)):
+
+                self.predict(u=u, B=B, F=F, Q=Q)
+                means_p[i, :] = self.x
+                covariances_p[i, :, :] = self.P
+
+                self.update(z, R=R, H=H)
+                means[i, :] = self.x
+                covariances[i, :, :] = self.P
+
+                if saver is not None:
+                    saver.save()
+
+        return (means, covariances, means_p, covariances_p)
+        
