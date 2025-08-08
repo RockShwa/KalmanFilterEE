@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import dot, zeros, eye, isscalar, shape
+from scipy.linalg import inv
 
 class KalmanFilterImplementation(object):
     
@@ -41,12 +42,13 @@ class KalmanFilterImplementation(object):
         
         # x = Fx + Bu
         if B is not None and u is not None:
-            self.x = np.dot(F, self.x) + np.dot(B, u)
+            # self.x = np.dot(F, self.x) + np.dot(B, u)
+            self.x = F @ self.x + B @ u
         else:
-            self.x = np.dot(F, self.x)
+            self.x = F @ self.x 
             
         # P = FPF' + Q
-        self.P = np.dot(np.dot(F, self.P), F.T) + Q
+        self.P = F @ self.P @ F.T + Q
         
         self.x_prior = self.x.copy()
         self.P_prior = self.P.copy()
@@ -64,17 +66,17 @@ class KalmanFilterImplementation(object):
             z = np.reshape_z(z, self.dim_z, self.x.ndim)
             H = self.H
             
-        self.y = z - np.dot(H, self.x)
+        self.y = z - H @ self.x
         # K = PH'inverse(HPH'+R)
-        self.K = np.dot(np.dot(self.P, H.T), np.linalg.inv(np.dot(H, np.dot(self.P, H.T)) + R))
+        self.K = self.P @ H.T @ inv(H @ self.P @ H.T + R)
         
-        self.x = self.x + np.dot(self.K, self.y)
+        self.x = self.x + self.K @ self.y
        
         # P = (I-KH)P(I-KH)' + KRK'
-        I_KH = self.I - np.dot(self.K, H)
-        self.P = np.dot(np.dot(I_KH, self.P), I_KH.T) + np.dot(np.dot(self.K, R), self.K.T)
+        I_KH = self.I - self.K @ H
+        self.P = I_KH @ self.P @ I_KH.T + self.K @ R @ self.K.T
          
-        print(self.x)
+        #print(self.x)
         self.x_post = self.x.copy()
         self.P_post = self.P.copy()
         
@@ -106,4 +108,6 @@ class KalmanFilterImplementation(object):
 
                 if saver is not None:
                     saver.save()
+                    
+                    
         
