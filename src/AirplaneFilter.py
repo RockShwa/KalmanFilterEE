@@ -5,7 +5,7 @@ import KalmanFilterImplementation
 from filterpy.common import Q_discrete_white_noise
 from filterpy.common import Saver
 from Plots import plot_kf_output
-from Plots import plot_track
+from Plots import plot_residuals
 from scipy.linalg import inv
 
 class Airplane(object):
@@ -65,7 +65,8 @@ def filter_data(kf, zs):
 
 # Executed:
 R, Q = 1, 0.03
-xs, zs = simulate_system(Q=Q, count=50)
+xs, zs = simulate_system(Q=Q, count=60)
+# zs = np.array([.32])
 
 kf = init_filter(R, Q, dt=1)
 data1 = filter_data(kf, zs)
@@ -75,6 +76,11 @@ data1 = filter_data(kf, zs)
 # data1.x is the filter posteriors 
 plt.scatter(range(len(zs)), zs)
 plot_kf_output(xs, data1.x, data1.z)
+
+# plot_residuals(xs[:, 0], data1, 0, 
+#                title='Airplane Residuals',
+#                y_label='meters')   
+
 
     
     

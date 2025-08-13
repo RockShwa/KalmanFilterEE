@@ -70,11 +70,13 @@ class KalmanFilterImplementation(object):
         # K = PH'inverse(HPH'+R)
         self.K = self.P @ H.T @ inv(H @ self.P @ H.T + R)
         
+        
         self.x = self.x + self.K @ self.y
        
         # P = (I-KH)P(I-KH)' + KRK'
         I_KH = self.I - self.K @ H
         self.P = I_KH @ self.P @ I_KH.T + self.K @ R @ self.K.T
+        print(self.P)
          
         #print(self.x)
         self.x_post = self.x.copy()

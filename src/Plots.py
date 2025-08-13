@@ -114,3 +114,10 @@ def bar_plot(pos, x=None, ylim=(0,1), title=None, c='#30a2da',
     plt.xticks(np.asarray(x), x)
     if title is not None:
         plt.title(title)
+
+def plot_residuals(xs, data, col, title, y_label, stds=1):
+    res = xs - data.x[:, col]
+    plt.plot(res)
+    # plot_residual_limits(data.P[:, col, col], stds)
+    set_labels(title, 'time (sec)', y_label)  
+    plt.show()      
