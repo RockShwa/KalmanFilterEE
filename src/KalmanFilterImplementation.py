@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import dot, zeros, eye, isscalar, shape
 from scipy.linalg import inv
+from Plots import reshape_z
 
 class KalmanFilterImplementation(object):
     
@@ -29,7 +30,8 @@ class KalmanFilterImplementation(object):
 
         self.x_post = self.x.copy()
         self.P_post = self.P.copy()
-        
+          
+            
     def predict(self, u=None, B=None, F=None, Q=None):
         if B is None:
             B = self.B
@@ -63,7 +65,7 @@ class KalmanFilterImplementation(object):
             R = eye(self.dim_z) * R
 
         if H is None:
-            z = np.reshape_z(z, self.dim_z, self.x.ndim)
+            z = reshape_z(z, self.dim_z, self.x.ndim)
             H = self.H
             
         self.y = z - H @ self.x
@@ -76,7 +78,6 @@ class KalmanFilterImplementation(object):
         # P = (I-KH)P(I-KH)' + KRK'
         I_KH = self.I - self.K @ H
         self.P = I_KH @ self.P @ I_KH.T + self.K @ R @ self.K.T
-        print(self.P)
          
         #print(self.x)
         self.x_post = self.x.copy()

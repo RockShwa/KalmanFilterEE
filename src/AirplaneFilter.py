@@ -1,12 +1,13 @@
 from numpy.random import randn
 import matplotlib.pyplot as plt
 import numpy as np
-import KalmanFilterImplementation
 from filterpy.common import Q_discrete_white_noise
 from filterpy.common import Saver
 from Plots import plot_kf_output
 from Plots import plot_residuals
 from scipy.linalg import inv
+from filterpy.kalman import KalmanFilter
+
 
 class Airplane(object):
     # Create sensor data 
@@ -24,12 +25,12 @@ class Airplane(object):
         
 # Create randomized sensor data        
 def sense(x, noise_scale = 1.):
-    return x[0] + np.abs(np.random.randn()) # * noise_scale
+    return x[0] + np.abs(np.random.randn()) * noise_scale
 
 # create Airplane and gather sensor data
 def simulate_system(Q, count):
     # 600 mph -> .17 mps
-    obj = Airplane(x0=0, vel=.17, noise_scale=Q)
+    obj = Airplane(x0=1.7, vel=.17, noise_scale=Q)
 
     xs, zs = [], []
     for i in range(count):
@@ -44,7 +45,7 @@ def simulate_system(Q, count):
 # init all matricies for the filter and create the filter
 def init_filter(R, Q, dt):
     # pos and velo
-    kf = KalmanFilterImplementation.KalmanFilterImplementation(dim_x=2, dim_z=1)
+    kf = KalmanFilter(dim_x=2, dim_z=1)
     kf.x = np.array([0, .17])
     kf.P = np.array([[1, 0], [0,1]])
     kf.R = R
@@ -65,7 +66,11 @@ def filter_data(kf, zs):
 
 # Executed:
 R, Q = 1, 0.03
-xs, zs = simulate_system(Q=Q, count=60)
+
+np.random.seed(5)
+
+xs, zs = simulate_system(Q=Q, count=120)
+print(zs)
 # zs = np.array([.32])
 
 kf = init_filter(R, Q, dt=1)
@@ -74,10 +79,11 @@ data1 = filter_data(kf, zs)
 # track is xs (rough estimation) 
 # zs are dots
 # data1.x is the filter posteriors 
+np.random.seed(5)
 plt.scatter(range(len(zs)), zs)
 plot_kf_output(xs, data1.x, data1.z)
 
-# plot_residuals(xs[:, 0], data1, 0, 
+# plot_residuals(xs[:, 0], data1, 0,
 #                title='Airplane Residuals',
 #                y_label='meters')   
 
