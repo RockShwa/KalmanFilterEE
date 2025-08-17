@@ -13,7 +13,7 @@ from Plots import plot_filter
 from scipy.linalg import inv
 from filterpy.kalman import KalmanFilter
 
-def filter_data(gps_sigma, dvs_sigma, do_plot):
+def filter_data(gps_sigma, ins_sigma, do_plot):
     dt = 1
 
     # pos and velo
@@ -21,7 +21,7 @@ def filter_data(gps_sigma, dvs_sigma, do_plot):
     kf.x = np.array([0, .17])
     kf.P = np.array([[1, 0], [0, 1]])
     kf.R[0, 0] = gps_sigma**2
-    kf.R[1, 1] = dvs_sigma**2
+    kf.R[1, 1] = ins_sigma**2
     kf.Q = Q_discrete_white_noise(2, dt, .03)
     kf.F = np.array([[1., dt],
                         [0., 1]])
@@ -34,9 +34,17 @@ def filter_data(gps_sigma, dvs_sigma, do_plot):
     
     residuals = []
 
-    for i in range(1, 3600):
+    x = .32
+    v = 0 + np.abs(np.random.randn()) * ins_sigma
+    print(x)
+    kf.predict()
+    kf.update(np.array([[x], [v]]))
+    residuals.append(kf.y.copy())
+    s.save()
+    for i in range(1, 120):
         x = i + np.abs(np.random.randn()) * gps_sigma
-        v = i + np.abs(np.random.randn()) * dvs_sigma
+        v = i + np.abs(np.random.randn()) * ins_sigma
+        print(x)
         kf.predict()
         kf.update(np.array([[x], [v]]))
         residuals.append(kf.y.copy())
@@ -46,13 +54,12 @@ def filter_data(gps_sigma, dvs_sigma, do_plot):
     residuals = np.array(residuals)
 
     if do_plot:
-        # ts = np.arange(0.1, 10, .1)
-        # plot_measurements(ts, s.z[:, 0], label='GPS1')
+        # ts = np.arange(0, 120, 1)
+        # plot_measurements(ts, s.z[:, 0], label='GPS')
         # # print(s.z[:, 0])
-        # plt.plot(ts, s.z[:, 1], ls='--', label='GPS2')
+        # plt.plot(ts, s.z[:, 1], ls='--', label='INS')
         # plot_filter(ts, s.x[:, 0], label='Kalman filter')
         # plt.legend(loc=4)
-        # plt.ylim(0, 100)
         # set_labels(x='time (sec)', y='meters') 
         # plt.show()
         

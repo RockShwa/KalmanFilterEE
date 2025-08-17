@@ -30,9 +30,9 @@ def sense(x, noise_scale = 1.):
 # create Airplane and gather sensor data
 def simulate_system(Q, count):
     # 600 mph -> .17 mps
-    obj = Airplane(x0=1.7, vel=.17, noise_scale=Q)
+    obj = Airplane(x0=0, vel=.17, noise_scale=Q)
 
-    xs, zs = [], []
+    xs, zs = [], [.32]
     for i in range(count):
         x = obj.update()
         z = sense(x)
