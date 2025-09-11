@@ -1,3 +1,4 @@
+from matplotlib.ticker import MultipleLocator
 from numpy.random import randn
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,7 +14,7 @@ class Airplane(object):
     # Create sensor data 
     # xs = predicted position 
     # zs = sensor values, randomized around xs
-    def __init__(self, x0=0, vel=.17, noise_scale=0.06):
+    def __init__(self, x0=0, vel=.239, noise_scale=0.06):
         self.x = x0
         self.vel = vel
         self.noise_scale = noise_scale
@@ -30,13 +31,12 @@ def sense(x, noise_scale = 1.):
 # create Airplane and gather sensor data
 def simulate_system(Q, count):
     # 600 mph -> .17 mps
-    obj = Airplane(x0=0, vel=.17, noise_scale=Q)
+    obj = Airplane(x0=0, vel=.239, noise_scale=Q)
 
-    xs, zs = [], [.32]
+    xs, zs = [], []
     for i in range(count):
         x = obj.update()
         z = sense(x)
-        # print(z)
         xs.append(x)
         zs.append(z)
         
@@ -70,8 +70,8 @@ R, Q = 1, 0.03
 np.random.seed(5)
 
 xs, zs = simulate_system(Q=Q, count=120)
+np.put(zs, 0, 3.2)
 print(zs)
-# zs = np.array([.32])
 
 kf = init_filter(R, Q, dt=1)
 data1 = filter_data(kf, zs)
@@ -79,13 +79,34 @@ data1 = filter_data(kf, zs)
 # track is xs (rough estimation) 
 # zs are dots
 # data1.x is the filter posteriors 
-np.random.seed(5)
+np.random.seed(5) 
+
 plt.scatter(range(len(zs)), zs)
 plot_kf_output(xs, data1.x, data1.z)
 
-# plot_residuals(xs[:, 0], data1, 0,
-#                title='Airplane Residuals',
-#                y_label='meters')   
+highSum = 0
+lowSum = 0
+
+i = 0
+
+for element in np.nditer(xs[:, 0] - data1.x[:, 0]):
+    if i >= 120:
+        break
+    if element >= 0:
+        highSum += (xs[:, 0] - data1.x[:, 0])[i]
+    elif element < 0:
+        lowSum += (xs[:, 0] - data1.x[:, 0])[i]   
+    i += 1     
+        
+average = (highSum + lowSum)/(xs[:, 0] - data1.x[:, 0]).size
+
+plt.axhline(average, color='g')
+
+plt.axhline(0, color = 'r')
+
+plot_residuals(xs[:, 0], data1, 0,
+               title='Kalman Filter Residuals (time series)',
+               y_label='Residuals')   
 
 
     

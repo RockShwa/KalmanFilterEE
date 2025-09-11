@@ -71,7 +71,7 @@ def plot_kf_output(xs, filter_xs, zs, title=None, aspect_equal=True):
     if zs is not None:
         plot_measurements(zs)
     show_legend()
-    set_labels(title=title, y='meters', x='time (sec)')
+    set_labels(title=title, y='kilometers', x='time (sec)')
     if aspect_equal:
         plt.gca().set_aspect('equal')
     plt.xlim((-1, len(xs)))
@@ -117,9 +117,10 @@ def bar_plot(pos, x=None, ylim=(0,1), title=None, c='#30a2da',
 
 def plot_residuals(xs, data, col, title, y_label, stds=3):
     res = xs - data.x[:, col]
+
     plt.plot(res)
     plot_residual_limits(data.P[:, col, col], stds)
-    set_labels(title, 'time (sec)', y_label)  
+    set_labels(title, 'Time step (seconds)', y_label)  
     plt.show()      
     
 def set_labels(title=None, x=None, y=None):
