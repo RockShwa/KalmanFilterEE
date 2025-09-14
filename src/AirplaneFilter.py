@@ -100,9 +100,9 @@ for element in np.nditer(xs[:, 0] - data1.x[:, 0]):
         
 average = (highSum + lowSum)/(xs[:, 0] - data1.x[:, 0]).size
 
-plt.axhline(average, color='g')
+plt.axhline(average, color='g', label='Average Center Residial Line')
 
-plt.axhline(0, color = 'r')
+plt.axhline(0, color = 'r', label='Ideal Center Residual Line')
 
 plot_residuals(xs[:, 0], data1, 0,
                title='Kalman Filter Residuals (time series)',

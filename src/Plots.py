@@ -117,8 +117,10 @@ def bar_plot(pos, x=None, ylim=(0,1), title=None, c='#30a2da',
 
 def plot_residuals(xs, data, col, title, y_label, stds=3):
     res = xs - data.x[:, col]
+    
+    plt.legend(loc='upper right')
 
-    plt.plot(res)
+    plt.plot(res, label = 'GPS Residual')
     plot_residual_limits(data.P[:, col, col], stds)
     set_labels(title, 'Time step (seconds)', y_label)  
     plt.show()      

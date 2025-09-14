@@ -34,7 +34,7 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
 
     residuals = []
     
-    for i in range(1, 121):
+    for i in range(1, 601):
         x = i + np.abs(np.random.randn()) * gps_sigma
         v = i + np.abs(np.random.randn()) * ins_sigma
         print(v)
@@ -56,8 +56,8 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
         # set_labels(x='time (sec)', y='meters') 
         # plt.show()
 
-        plt.plot(residuals[: , 0], label="residual[0]")
-        plt.plot(residuals[:, 1], label="residual[1]")
+        plt.plot(residuals[: , 0], label='GPS Residual')
+        plt.plot(residuals[:, 1], label='INS Residual')
         
         highSum = 0
         lowSum = 0
@@ -65,7 +65,7 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
         i = 0
         
         for element in np.nditer(residuals):
-            if i >= 120:
+            if i >= 600:
                 break
             if element >= 0:
                 highSum += residuals[i, 0]
@@ -83,7 +83,7 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
         plt.ylabel("Residual")
         plt.legend()
         plt.title("Kalman Filter Residuals (time series)")
-        plt.axhline(0, color = 'r')
+        # plt.axhline(0, color = 'r')
         plt.show()
             
     
