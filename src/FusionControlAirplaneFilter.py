@@ -34,7 +34,7 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
 
     residuals = []
     
-    for i in range(1, 601):
+    for i in range(1, 121):
         x = i + np.abs(np.random.randn()) * gps_sigma
         v = i + np.abs(np.random.randn()) * ins_sigma
         print(v)
@@ -65,7 +65,7 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
         i = 0
         
         for element in np.nditer(residuals):
-            if i >= 600:
+            if i >= 120:
                 break
             if element >= 0:
                 highSum += residuals[i, 0]
@@ -75,15 +75,15 @@ def filter_data(gps_sigma, ins_sigma, do_plot):
                 
         average = (highSum + lowSum)/residuals.size
         
-        plt.axhline(average, color='g')
+        plt.axhline(average, color='g', label = 'Average Center Residual Line')
             
         
         plot_residual_limits(s.P[:, 0, 0], 3)
         plt.xlabel("Time step (seconds)")
         plt.ylabel("Residual")
+        plt.axhline(0, color = 'r', label = 'Ideal Center Residual Line')
         plt.legend()
         plt.title("Kalman Filter Residuals (time series)")
-        # plt.axhline(0, color = 'r')
         plt.show()
             
     
